@@ -10,7 +10,7 @@ function fetchSunriseSunsetData(latitude, longitude, date) {
         });
 }
 
-function updateUI(yesterdayData, todayData, tomorrowData, selectedLocation) {
+function updateUI(yesterdayData, todayData, tomorrowData, selectedLocation, selectedDate) {
     const resultContainer = document.getElementById('resultContainer');
 
     if (yesterdayData.status === "OK" && todayData.status === "OK" && tomorrowData.status === "OK") {
@@ -18,32 +18,30 @@ function updateUI(yesterdayData, todayData, tomorrowData, selectedLocation) {
         const today = todayData.results;
         const tomorrow = tomorrowData.results;
 
-        // Create a title indicating the selected location
-        const title = document.createElement('h2');
-     	// Create a span element for selectedLocation with specific style
-        const locationSpan = document.createElement('span');
-        locationSpan.textContent = selectedLocation;
-        locationSpan.style.color = 'blue'; // Change to your desired color
-        locationSpan.style.fontWeight = 'bold';
 
-        // Append the span to the title
+        const formattedSelectedDate = new Date(selectedDate);
+        const yesterdayDate = new Date(formattedSelectedDate.getTime() - (24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+        const tomorrowDate = new Date(formattedSelectedDate.getTime() + (24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+
+        const title = document.createElement('h2');
+        const locationSpan = document.createElement('span');
+        locationSpan.textContent = `${selectedLocation} on ${selectedDate}`;
+        locationSpan.style.color = 'blue';
+        locationSpan.style.fontWeight = 'bold';
         title.appendChild(document.createTextNode('Sunrise-Sunset Data for '));
         title.appendChild(locationSpan);
 
-        // Create a table element
         const table = document.createElement('table');
         table.classList.add('resultTable');
 
-        // Add table header
         const headerRow = table.insertRow(0);
-        const headers = ['Property', 'Yesterday', 'Today', 'Tomorrow'];
+        const headers = ['Property', `Yesterday (${yesterdayDate})`, `Today (${selectedDate})`, `Tomorrow (${tomorrowDate})`];
         headers.forEach(headerText => {
             const th = document.createElement('th');
             th.textContent = headerText;
             headerRow.appendChild(th);
         });
 
-        // Add data rows to the table
         addTableRow(table, 'Timezone', yesterday.timezone, today.timezone, tomorrow.timezone);
         addTableRow(table, 'Sunrise', yesterday.sunrise, today.sunrise, tomorrow.sunrise);
         addTableRow(table, 'Sunset', yesterday.sunset, today.sunset, tomorrow.sunset);
@@ -52,7 +50,6 @@ function updateUI(yesterdayData, todayData, tomorrowData, selectedLocation) {
         addTableRow(table, 'Day Length', yesterday.day_length, today.day_length, tomorrow.day_length);
         addTableRow(table, 'Solar Noon', yesterday.solar_noon, today.solar_noon, tomorrow.solar_noon);
 
-        // Append the title and table to the result container
         resultContainer.innerHTML = '';
         resultContainer.appendChild(title);
         resultContainer.appendChild(table);
@@ -62,6 +59,7 @@ function updateUI(yesterdayData, todayData, tomorrowData, selectedLocation) {
 }
 
 
+
 function addTableRow(table, property, yesterdayValue, todayValue, tomorrowValue) {
     const row = table.insertRow();
     const propertyCell = row.insertCell(0);
@@ -69,7 +67,7 @@ function addTableRow(table, property, yesterdayValue, todayValue, tomorrowValue)
     const todayCell = row.insertCell(2);
     const tomorrowCell = row.insertCell(3);
 
-    // Add Font Awesome icons to the property cells
+
     switch (property.toLowerCase()) {
         case 'timezone':
             propertyCell.innerHTML = '<i class="fas fa-globe"></i> ' + property;
@@ -80,7 +78,7 @@ function addTableRow(table, property, yesterdayValue, todayValue, tomorrowValue)
         case 'sunset':
             propertyCell.innerHTML = '<i class="fas fa-moon"></i> ' + property;
             break;
-        // Add cases for other properties
+
         default:
             propertyCell.textContent = property;
     }
@@ -94,7 +92,7 @@ function getCurrentLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-		locationInput.value = ''; // Clear the input field
+                locationInput.value = ''; 
                 const latitude = position.coords.latitude;
                 const longitude = position.coords.longitude;
 
@@ -108,7 +106,7 @@ function getCurrentLocation() {
                         return response.json();
                     })
                     .then(reverseGeocodeData => {
-                        const currentLocation = reverseGeocodeData.city;
+                        const currentLocation = reverseGeocodeData.display_name; 
 
                         const today = new Date().toISOString().split('T')[0];
                         const yesterday = new Date();
@@ -119,14 +117,14 @@ function getCurrentLocation() {
                         tomorrow.setDate(new Date().getDate() + 1);
                         const formattedTomorrow = tomorrow.toISOString().split('T')[0];
 
-                        // Make three separate API calls for yesterday, today, and tomorrow
                         Promise.all([
                             fetchSunriseSunsetData(latitude, longitude, formattedYesterday),
                             fetchSunriseSunsetData(latitude, longitude, today),
                             fetchSunriseSunsetData(latitude, longitude, formattedTomorrow)
                         ])
                         .then(([yesterdayData, todayData, tomorrowData]) => {
-                            updateUI(yesterdayData, todayData, tomorrowData, "Chicago");
+                            
+                            updateUI(yesterdayData, todayData, tomorrowData, currentLocation, today);
                         })
                         .catch(error => {
                             handleErrors(error);
@@ -148,8 +146,9 @@ function getCurrentLocation() {
 
 function searchLocation() {
     const locationInput = document.getElementById('locationInput').value;
+    console.log('Searching for location:', locationInput);
+    const selectedDate = document.getElementById('dateInput').value || new Date().toISOString().split('T')[0];
 
-    // Use the correct geocoding API URL
     const geocodeUrl = `https://geocode.maps.co/search?q=${locationInput}`;
 
     fetch(geocodeUrl)
@@ -165,37 +164,24 @@ function searchLocation() {
             }
             const firstMatch = geocodeData[0];
 
-            // Extract latitude and longitude from the geocode response
             const latitude = firstMatch.lat;
             const longitude = firstMatch.lon;
 
-            const today = new Date().toISOString().split('T')[0];
-            const yesterday = new Date();
-            yesterday.setDate(new Date().getDate() - 1);
-            const formattedYesterday = yesterday.toISOString().split('T')[0];
-
-            const tomorrow = new Date();
-            tomorrow.setDate(new Date().getDate() + 1);
-            const formattedTomorrow = tomorrow.toISOString().split('T')[0];
-
-            // Make separate API calls for yesterday, today, and tomorrow
-            Promise.all([
-                fetchSunriseSunsetData(latitude, longitude, formattedYesterday),
-                fetchSunriseSunsetData(latitude, longitude, today),
-                fetchSunriseSunsetData(latitude, longitude, formattedTomorrow)
-            ])
-            .then(([yesterdayData, todayData, tomorrowData]) => {
-                updateUI(yesterdayData, todayData, tomorrowData, locationInput);
-            })
-            .catch(error => {
-                handleErrors(error);
-            });
+            return fetchSunriseSunsetData(latitude, longitude, selectedDate);
+        })
+        .then(data => {
+            if (data.status === 'OK') {
+                updateUI(data, data, data, locationInput, selectedDate);
+            } else {
+                throw new Error('Failed to fetch sunrise-sunset data.');
+            }
         })
         .catch(error => {
+            console.error(error);
             handleErrors(error);
         });
 }
-// Your existing functions
+
 
 function selectCapital(capital) {
     const locationInput = document.getElementById('locationInput');
@@ -210,10 +196,46 @@ function handleEnterKey(event) {
     }
 }
 
+function loadFavoriteLocation() {
+    const favoriteLocation = localStorage.getItem('favoriteLocation');
+    if (favoriteLocation) {
+        document.getElementById('locationInput').value = favoriteLocation;
+
+        console.log('Loading favorite location:', favoriteLocation);
+        searchLocation(); 
+    } else {
+        alert('No favorite location saved.');
+    }
+}
+
+
+
+
+function saveLocation() {
+    const location = document.getElementById('locationInput').value;
+    localStorage.setItem('favoriteLocation', location);
+    alert('Favorite location saved!'); 
+}
+
+
+function loadFavoriteLocation() {
+    const favoriteLocation = localStorage.getItem('favoriteLocation');
+    if (favoriteLocation) {
+        document.getElementById('locationInput').value = favoriteLocation;
+    } else {
+        alert('No favorite location saved.'); 
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Listen for 'Enter' key press in the input field
     document.getElementById('locationInput').addEventListener('keydown', handleEnterKey);
-
+    loadFavoriteLocation();
 });
 
+
+function handleErrors(error) {
+    console.error('An error occurred:', error.message);
+
+    const resultContainer = document.getElementById('resultContainer');
+    resultContainer.innerHTML = `<p>Error: ${error.message}</p>`;
+}

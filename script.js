@@ -195,38 +195,6 @@ function handleEnterKey(event) {
         searchLocation();
     }
 }
-
-function loadFavoriteLocation() {
-    const favoriteLocation = localStorage.getItem('favoriteLocation');
-    if (favoriteLocation) {
-        document.getElementById('locationInput').value = favoriteLocation;
-
-        console.log('Loading favorite location:', favoriteLocation);
-        searchLocation(); 
-    } else {
-        alert('No favorite location saved.');
-    }
-}
-
-
-
-
-function saveLocation() {
-    const location = document.getElementById('locationInput').value;
-    localStorage.setItem('favoriteLocation', location);
-    alert('Favorite location saved!'); 
-}
-
-
-function loadFavoriteLocation() {
-    const favoriteLocation = localStorage.getItem('favoriteLocation');
-    if (favoriteLocation) {
-        document.getElementById('locationInput').value = favoriteLocation;
-    } else {
-        alert('No favorite location saved.'); 
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('locationInput').addEventListener('keydown', handleEnterKey);
     loadFavoriteLocation();

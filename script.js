@@ -167,17 +167,28 @@ function searchLocation() {
             const latitude = firstMatch.lat;
             const longitude = firstMatch.lon;
 
-            return fetchSunriseSunsetData(latitude, longitude, selectedDate);
-        })
-        .then(data => {
-            if (data.status === 'OK') {
-                updateUI(data, data, data, locationInput, selectedDate);
-            } else {
-                throw new Error('Failed to fetch sunrise-sunset data.');
-            }
+            onst today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date();
+            yesterday.setDate(new Date().getDate() - 1);
+            const formattedYesterday = yesterday.toISOString().split('T')[0];
+
+            const tomorrow = new Date();
+            tomorrow.setDate(new Date().getDate() + 1);
+            const formattedTomorrow = tomorrow.toISOString().split('T')[0];
+
+            Promise.all([
+                fetchSunriseSunsetData(latitude, longitude, formattedYesterday),
+                fetchSunriseSunsetData(latitude, longitude, today),
+                fetchSunriseSunsetData(latitude, longitude, formattedTomorrow)
+            ])
+            .then(([yesterdayData, todayData, tomorrowData]) => {
+                updateUI(yesterdayData, todayData, tomorrowData, locationInput);
+            })
+            .catch(error => {
+                handleErrors(error);
+            });
         })
         .catch(error => {
-            console.error(error);
             handleErrors(error);
         });
 }

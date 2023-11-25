@@ -123,8 +123,8 @@ function getCurrentLocation() {
                             fetchSunriseSunsetData(latitude, longitude, formattedTomorrow)
                         ])
                         .then(([yesterdayData, todayData, tomorrowData]) => {
-                            
-                            updateUI(yesterdayData, todayData, tomorrowData, currentLocation, today);
+
+                            updateUI(yesterdayData, todayData, tomorrowData, locationInput, selectedDate);
                         })
                         .catch(error => {
                             handleErrors(error);

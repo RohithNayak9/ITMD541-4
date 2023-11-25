@@ -123,8 +123,8 @@ function getCurrentLocation() {
                             fetchSunriseSunsetData(latitude, longitude, formattedTomorrow)
                         ])
                         .then(([yesterdayData, todayData, tomorrowData]) => {
-
-                            updateUI(yesterdayData, todayData, tomorrowData, locationInput, selectedDate);
+                            
+                            updateUI(yesterdayData, todayData, tomorrowData, currentLocation, today);
                         })
                         .catch(error => {
                             handleErrors(error);
@@ -176,19 +176,19 @@ function searchLocation() {
             tomorrow.setDate(new Date().getDate() + 1);
             const formattedTomorrow = tomorrow.toISOString().split('T')[0];
 
-            Promise.all([
-                fetchSunriseSunsetData(latitude, longitude, formattedYesterday),
-                fetchSunriseSunsetData(latitude, longitude, today),
-                fetchSunriseSunsetData(latitude, longitude, formattedTomorrow)
-            ])
-            .then(([yesterdayData, todayData, tomorrowData]) => {
-                updateUI(yesterdayData, todayData, tomorrowData, locationInput);
+            return fetchSunriseSunsetData(latitude, longitude, formattedYesterday),
+            return fetchSunriseSunsetData(latitude, longitude, today),
+            return fetchSunriseSunsetData(latitude, longitude, formattedTomorrow)
             })
-            .catch(error => {
-                handleErrors(error);
-            });
+            .then(data => {
+            if (data.status === 'OK') {
+                updateUI(yesterdayData, todayData, tomorrowData, locationInput, selectedDate);
+            } else {
+                throw new Error('Failed to fetch sunrise-sunset data.');
+            }
         })
         .catch(error => {
+            console.error(error);
             handleErrors(error);
         });
 }

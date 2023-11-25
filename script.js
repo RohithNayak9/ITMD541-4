@@ -167,7 +167,7 @@ function searchLocation() {
             const latitude = firstMatch.lat;
             const longitude = firstMatch.lon;
 
-            onst today = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
             const yesterday = new Date();
             yesterday.setDate(new Date().getDate() - 1);
             const formattedYesterday = yesterday.toISOString().split('T')[0];
